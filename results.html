@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Redaction Results - Document Redaction Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Redacted Documents
+                </h3>
+                <div>
+                    <a href="{{ url_for('index') }}" class="btn btn-light btn-sm me-2">
+                        <i class="fas fa-plus me-1"></i>Process More
+                    </a>
+                    {% if files %}
+                    <a href="{{ url_for('clear_files') }}" class="btn btn-outline-light btn-sm" 
+                       onclick="return confirm('Are you sure you want to clear all files?')">
+                        <i class="fas fa-trash me-1"></i>Clear All
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if files %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Success!</strong> {{ files|length }} document(s) have been processed and redacted.
+                        You can download them below.
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">
+                                        <i class="fas fa-file me-2"></i>File Name
+                                    </th>
+                                    <th scope="col">
+                                        <i class="fas fa-info me-2"></i>Type
+                                    </th>
+                                    <th scope="col">
+                                        <i class="fas fa-clock me-2"></i>Status
+                                    </th>
+                                    <th scope="col" class="text-center">
+                                        <i class="fas fa-download me-2"></i>Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if file.lower().endswith('.pdf') %}
+                                                <i class="fas fa-file-pdf text-danger me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-file-image text-primary me-2"></i>
+                                            {% endif %}
+                                            <strong>{{ file }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if file.lower().endswith('.pdf') %}
+                                            <span class="badge bg-danger">PDF Document</span>
+                                        {% elif file.lower().endswith(('.png', '.jpg', '.jpeg')) %}
+                                            <span class="badge bg-primary">Image File</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-shield-alt me-1"></i>Redacted
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('download', filename=file) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-download me-1"></i>Download
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Download All Button -->
+                    <div class="text-center mt-4">
+                        <button class="btn btn-success btn-lg" onclick="downloadAll()">
+                            <i class="fas fa-download me-2"></i>Download All Files
+                        </button>
+                    </div>
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Redacted Documents</h4>
+                        <p class="text-muted mb-4">You haven't processed any documents yet.</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Upload Documents
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if files %}
+        <!-- Security Notice -->
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Security Notice
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <strong>Important:</strong> Your documents have been processed securely. Please note:
+                </p>
+                <ul class="mb-0">
+                    <li>Original files are automatically deleted after processing</li>
+                    <li>Redacted files are temporarily stored for download</li>
+                    <li>Downloaded files should be stored securely on your device</li>
+                    <li>Clear files from the server when no longer needed</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if files %}
+<script>
+function downloadAll() {
+    const files = {{ files|tojson }};
+    files.forEach(file => {
+        const link = document.createElement('a');
+        link.href = `{{ url_for('download', filename='') }}${file}`;
+        link.download = file;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
+</script>
+{% endif %}
+{% endblock %}
